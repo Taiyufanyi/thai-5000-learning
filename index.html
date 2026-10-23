@@ -159,7 +159,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   <div class="audio-bar">
     <span class="dot" id="audioDot"></span>
     <span id="voiceLabel">泰语发音：正在检测语音引擎…</span>
-    <button class="button" id="testVoice">试听</button>
+    <button class="button" id="testVoice">试听</button><button class="button" id="iosAudioMode" style="display:none" title="苹果手机切换系统语音和在线发音">苹果发音：系统语音</button>
     <button class="button" id="reloadVoices">重新检测</button>
     <button class="button" id="cacheCurrentAudio" title="把当前词的在线 MP3 缓存到本机">缓存当前词</button>
     <span class="small" id="cacheStatus">音频缓存：尚未检测</span>
@@ -436,7 +436,74 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     if(queuedSpeechTimer){clearTimeout(queuedSpeechTimer);queuedSpeechTimer=null}
     if(speechSafetyTimer){clearTimeout(speechSafetyTimer);speechSafetyTimer=null}
   }
+
+  // Apple-only playback logic; Android / desktop keep their proven original code.
+  const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  let appleOnlineMode = false;  // user can toggle; defaults to built-in Thai voice
+  function speakOnApple(text, isExample=false){
+    const clean=String(text||'').trim();
+    if(!clean)return;
+    const token=++speakToken;
+    ++exampleSession;
+    finishSpeechTimers();
+    try{if(fallbackAudio){fallbackAudio.pause();fallbackAudio.src='';fallbackAudio.load();fallbackAudio=null}}catch(_){}
+    const synth=window.speechSynthesis;
+    // Remote audio must be started immediately inside the user click handler.
+    if(appleOnlineMode || !synth || !window.SpeechSynthesisUtterance){
+      onlineThaiAudio(clean,token).catch(()=>{
+        if(token!==speakToken)return;
+        $('voiceLabel').textContent='苹果在线发音未成功，请尝试切换系统语音';
+        $('audioDot').style.background='#e8a679';
+      });
+      return;
+    }
+    try{synth.cancel()}catch(_){}
+    // iOS can report 0 voices before it finishes loading. The explicit
+    // utterance language still permits Safari to select its own Thai voice.
+    let iosVoices=[];
+    try{iosVoices=synth.getVoices().filter(v=>String(v.lang||'').toLowerCase().startsWith('th'))}catch(_){}
+    const matched=iosVoices.find(v=>v.voiceURI===$('voiceSelect')?.value)||iosVoices[0]||null;
+    const chunks=isExample ? splitThaiExample(clean,65) : [clean];
+    let index=0;
+    const sayNext=()=>{
+      if(token!==speakToken || index>=chunks.length)return;
+      const u=new SpeechSynthesisUtterance(chunks[index++]);
+      currentSpeech=u;
+      u.lang='th-TH';
+      u.voice=matched;
+      u.rate=Number($('rate')?.value||1);
+      u.pitch=1;
+      u.onstart=()=>{
+        if(token!==speakToken)return;
+        $('voiceLabel').textContent=(isExample?'苹果泰语例句':'苹果泰语单词')+'：系统语音';
+        $('audioDot').style.background='#78d2a3';
+      };
+      u.onend=()=>{if(token===speakToken){currentSpeech=null;sayNext()}};
+      u.onerror=e=>{
+        if(token!==speakToken || ['canceled','interrupted'].includes(e.error))return;
+        $('voiceLabel').textContent='苹果系统语音不可用，可点“苹果发音”切换在线模式';
+        $('audioDot').style.background='#e8a679';
+      };
+      try{synth.speak(u)}catch(_){
+        $('voiceLabel').textContent='苹果系统语音调用失败，请切换在线模式';
+        $('audioDot').style.background='#e8a679';
+      }
+    };
+    sayNext();  // synchronous from user action
+  }
+  if(isAppleMobile){
+    const mode=$('iosAudioMode');
+    mode.style.display='';
+    mode.onclick=()=>{
+      appleOnlineMode=!appleOnlineMode;
+      mode.textContent=appleOnlineMode?'苹果发音：在线音频':'苹果发音：系统语音';
+      $('voiceLabel').textContent='已切换发音方式，请点击单词或例句测试';
+    };
+  }
+
   function speak(text){
+    if(isAppleMobile){speakOnApple(text,false);return}
     const clean=String(text||'').trim();
     if(!clean)return;
     const token=++speakToken;
@@ -578,9 +645,100 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     const b=e.target.closest('button'); if(!b) return;
     if(b.dataset.bookmark){ markStudyPosition(Number(b.dataset.bookmark)); }
     else if(b.dataset.speak){ const w=all.find(x=>x.id===+b.dataset.speak); if(w) speak(w.thai); }
-    else if(b.dataset.example){ let [id,i]=b.dataset.example.split(':').map(Number); const w=all.find(x=>x.id===id); if(w?.senses?.[i]?.example) speak(w.senses[i].example); }
+    else if(b.dataset.example){ let [id,i]=b.dataset.example.split(':').map(Number); const w=all.find(x=>x.id===id); if(w?.senses?.[i]?.example) speakExample(w.senses[i].example); }
     else if(b.dataset.fav){ toggleFav(Number(b.dataset.fav)); renderWords(); }
   };
+
+
+  // 例句专用点读：短句直接采用原发音方式；长句拆成较短的泰语片段，
+  // 避免部分 Android Chrome/TTS 引擎不启动长段落。
+  // This is separate from speak(): word pronunciation remains untouched.
+  let exampleSession = 0;
+  function splitThaiExample(text, maxLength=58){
+    const normalized=String(text||'').trim().replace(/\s+/g,' ');
+    if(normalized.length<=maxLength) return [normalized].filter(Boolean);
+    const segments=[];
+    let remaining=normalized;
+    while(remaining.length>maxLength){
+      let cutoff=remaining.lastIndexOf(' ',maxLength);
+      if(cutoff<Math.floor(maxLength*0.46)) cutoff=remaining.lastIndexOf(' ',maxLength+16);
+      if(cutoff<Math.floor(maxLength*0.46)) cutoff=maxLength;
+      segments.push(remaining.slice(0,cutoff).trim());
+      remaining=remaining.slice(cutoff).trim();
+    }
+    if(remaining)segments.push(remaining);
+    return segments.filter(Boolean);
+  }
+  function speakExample(text){
+    if(isAppleMobile){speakOnApple(text,true);return}
+    const parts=splitThaiExample(text);
+    if(!parts.length)return;
+    // All sentences still invoke native TTS immediately within the tap handler.
+    const playId=++exampleSession;
+    ++speakToken; // discard previous word or example asynchronous callbacks
+    finishSpeechTimers();
+    if(fallbackAudio){try{fallbackAudio.pause();fallbackAudio.src='';fallbackAudio.load()}catch(_){} fallbackAudio=null;}
+    const engine=window.speechSynthesis;
+    if(!engine || !window.SpeechSynthesisUtterance){
+      speak(parts[0]); return;
+    }
+    let available=[];
+    try{available=engine.getVoices()||[]}catch(_){}
+    const thaiVoices=available.filter(v=>String(v.lang||'').toLowerCase().startsWith('th'));
+    if(!thaiVoices.length){
+      // Existing online fallback works for short utterances, but not necessarily
+      // for longer ones. Use original speak path for short sentences.
+      if(parts.length===1){speak(parts[0]);return;}
+      let n=0;
+      const playOnlinePart=()=>{
+        if(exampleSession!==playId)return;
+        const part=parts[n++];
+        if(!part)return;
+        const token=++speakToken;
+        onlineThaiAudio(part,token).then(()=>{
+          if(exampleSession===playId)playOnlinePart();
+        }).catch(()=>{
+          $('voiceLabel').textContent='例句在线发音失败，请检查手机泰语语音或网络';
+          $('audioDot').style.background='#e8a679';
+        });
+      };
+      playOnlinePart();return;
+    }
+    try{engine.cancel()}catch(_){}
+    let partIndex=0;
+    const currentId=speakToken;
+    const voice=thaiVoices.find(v=>v.voiceURI===$('voiceSelect')?.value)||thaiVoices[0];
+    function nextPart(){
+      if(exampleSession!==playId||speakToken!==currentId)return;
+      if(partIndex>=parts.length){
+        currentSpeech=null;
+        $('voiceLabel').textContent='例句朗读完成';
+        return;
+      }
+      const utterance=new SpeechSynthesisUtterance(parts[partIndex++]);
+      currentSpeech=utterance;
+      utterance.lang='th-TH';
+      utterance.voice=voice;
+      utterance.rate=Number($('rate')?.value||1);
+      utterance.onstart=()=>{
+        if(exampleSession!==playId)return;
+        $('voiceLabel').textContent=`泰语例句：第 ${partIndex} / ${parts.length} 段`;
+        $('audioDot').style.background='#78d2a3';
+      };
+      utterance.onend=()=>{if(exampleSession===playId)nextPart()};
+      utterance.onerror=err=>{
+        if(exampleSession!==playId)return;
+        const error=err.error||'未知原因';
+        $('voiceLabel').textContent='例句发音未完成（'+error+'）';
+        $('audioDot').style.background='#e8a679';
+      };
+      try{engine.speak(utterance)}catch(_){
+        $('voiceLabel').textContent='例句朗读失败，请重新检测语音';
+        $('audioDot').style.background='#e8a679';
+      }
+    }
+    nextPart();
+  }
 
   function cardPool(){
     let list=basePool();
