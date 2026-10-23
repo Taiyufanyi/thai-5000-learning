@@ -148,7 +148,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     <button class="tab" data-tab="notebook">生词本</button>
     <button class="tab" data-tab="quiz">拼写测试</button>
   </nav>
-<div id="releaseMark" style="position:absolute;right:14px;bottom:5px;font-size:11px;color:#b9add1">版本 2026.10.23 · 安卓发音稳定版</div></header>
+<div id="releaseMark" style="position:absolute;right:14px;bottom:5px;font-size:11px;color:#b9add1">版本 2026.10.23 · 安卓连续点读修复</div></header>
 <main>
   <div class="toolbar">
     <div class="levels" id="levels"></div>
@@ -350,10 +350,10 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
       return;
     }
     try {
-      await navigator.serviceWorker.register('./sw.js?v=20261023-3', {updateViaCache:'none'});
+      await navigator.serviceWorker.register('./sw.js?v=20261023-2', {updateViaCache:'none'});
       await navigator.serviceWorker.ready;
       swReady = true;
-      $('cacheStatus').textContent='音频缓存：已启用（手动缓存音频）';
+      $('cacheStatus').textContent='音频缓存：已启用，点读后尝试保存 MP3';
     } catch (e) {
       $('cacheStatus').textContent='音频缓存：未启用，请确保 sw.js 与网页同目录';
     }
@@ -413,90 +413,120 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     await cacheAudio(currentText);
   }
   $('cacheCurrentAudio').onclick=cacheCurrentWord;
-  initAudioCache();
+  // Online troubleshooting build: disable service-worker interception entirely.
+  // Removing the previous worker is scoped only to this GitHub Pages application.
+  if ('serviceWorker' in navigator && location.protocol==='https:') {
+    navigator.serviceWorker.getRegistrations().then(regs=>Promise.all(
+      regs.filter(r=>r.scope.startsWith(location.origin+'/thai-5000-learning/')).map(r=>r.unregister())
+    )).then(()=>{
+      const key='thai5000_no_sw_reloaded_v1';
+      if(navigator.serviceWorker.controller && !sessionStorage.getItem(key)){
+        sessionStorage.setItem(key,'1'); location.reload();
+      }
+    }).catch(()=>{});
+  }
+  $('cacheStatus').textContent='本版为手机发音排查模式：已关闭网页离线缓存';
 
-  // Android speech engines may stall after repeated taps. Keep only one active
-  // utterance and one watchdog, and never let an old callback interrupt a new tap.
-  let speechWatchdog=null;
-  let speechStartTimer=null;
-  let activeUtterance=null;
-  function clearSpeechTimers(){
-    if(speechWatchdog){clearInterval(speechWatchdog);speechWatchdog=null}
-    if(speechStartTimer){clearTimeout(speechStartTimer);speechStartTimer=null}
+  // Mobile native TTS: don't cancel a completed/idle speech on every tap.
+  // On Android, rapidly canceling and resubmitting causes its engine to stall.
+  let currentSpeech=null;
+  let queuedSpeechTimer=null;
+  let speechSafetyTimer=null;
+  function finishSpeechTimers(){
+    if(queuedSpeechTimer){clearTimeout(queuedSpeechTimer);queuedSpeechTimer=null}
+    if(speechSafetyTimer){clearTimeout(speechSafetyTimer);speechSafetyTimer=null}
   }
   function speak(text){
     const clean=String(text||'').trim();
     if(!clean)return;
     const token=++speakToken;
-    clearSpeechTimers();
+    finishSpeechTimers();
     if(fallbackAudio){
-      try{fallbackAudio.pause();fallbackAudio.removeAttribute('src');fallbackAudio.load()}catch(_){}
+      try{fallbackAudio.pause();fallbackAudio.src='';fallbackAudio.load()}catch(_){}
       fallbackAudio=null;
     }
-    const hasSpeech=('speechSynthesis' in window)&&('SpeechSynthesisUtterance' in window);
-    const engine=hasSpeech?window.speechSynthesis:null;
-    let nativeVoices=[];
-    if(engine){
-      try{nativeVoices=engine.getVoices().filter(v=>String(v.lang||'').toLowerCase().startsWith('th'))}catch(_){}
-      try{engine.cancel()}catch(_){}
-    }
-    const fallback=(reason)=>{
+    const synth=('speechSynthesis' in window)?window.speechSynthesis:null;
+    const thaiVoices=synth?(synth.getVoices()||[]).filter(v=>String(v.lang||'').toLowerCase().startsWith('th')):[];
+    const tryOnline=(reason)=>{
       if(token!==speakToken)return;
-      clearSpeechTimers();
-      activeUtterance=null;
-      try{engine?.cancel()}catch(_){}
-      // Start the remote audio source only after native speech cannot start.
-      // It may be blocked on some networks; display a helpful failure message.
+      $('voiceLabel').textContent='系统语音未播放（'+reason+'），尝试在线音频…';
       onlineThaiAudio(clean,token).catch(()=>{
         if(token!==speakToken)return;
-        $('voiceLabel').textContent='泰语发音未成功，请检查手机泰语语音包或网络';
         $('audioDot').style.background='#e8a679';
-        toast('语音暂停了：请点“重新检测语音”，或检查手机的泰语文字转语音设置。');
+        $('voiceLabel').textContent='本次发音失败：可点重新检测后重试';
+        toast('本次没有声音。请点“重新检测”，或查看手机文字转语音的泰语语音包。');
       });
     };
-    if(!engine||!nativeVoices.length){fallback('no-voice');return}
-    try{
-      const u=new SpeechSynthesisUtterance(clean);
-      activeUtterance=u;
-      u.lang='th-TH';
-      u.rate=Number($('rate')?.value||1);
-      u.pitch=1;
-      const selected=$('voiceSelect')?.value;
-      u.voice=nativeVoices.find(v=>v.voiceURI===selected)||nativeVoices[0];
-      let started=false,done=false;
-      u.onstart=()=>{
-        if(token!==speakToken)return;
-        started=true;
-        if(speechStartTimer){clearTimeout(speechStartTimer);speechStartTimer=null}
-        $('voiceLabel').textContent='泰语发音：'+(u.voice?.name||'系统泰语语音');
-        $('audioDot').style.background='#78d2a3';
-      };
-      u.onend=()=>{
-        if(token!==speakToken)return;
-        done=true;activeUtterance=null;clearSpeechTimers();
-      };
-      u.onerror=e=>{
-        if(token!==speakToken||done)return;
-        done=true;
-        // interruption/cancellation is expected if the learner taps another word
-        if(e.error==='interrupted'||e.error==='canceled'){clearSpeechTimers();return}
-        fallback(e.error);
-      };
-      // Android / Chrome may report speaking while stuck. resume() is a
-      // low-impact watchdog; the start timeout can switch to online audio.
-      speechStartTimer=setTimeout(()=>{
-        if(token===speakToken&&!started&&!done)fallback('start-timeout');
-      },4200);
-      speechWatchdog=setInterval(()=>{
-        if(token!==speakToken||done){clearSpeechTimers();return}
-        try{if(engine.paused)engine.resume()}catch(_){}
-      },1600);
-      engine.speak(u);
-    }catch(e){fallback('exception')}
+    if(!synth||!thaiVoices.length){tryOnline('未找到泰语语音');return}
+    const wasActive=!!currentSpeech || synth.speaking || synth.pending;
+    // When a learner taps again before the previous utterance finishes, release
+    // the old utterance, then allow Android's TTS service a brief reset.
+    if(wasActive){
+      try{synth.cancel()}catch(_){}
+      currentSpeech=null;
+    }
+    const playNative=()=>{
+      if(token!==speakToken)return;
+      try{
+        const utterance=new SpeechSynthesisUtterance(clean);
+        currentSpeech=utterance;
+        utterance.lang='th-TH';
+        utterance.rate=Number($('rate')?.value||1);
+        const wanted=$('voiceSelect')?.value;
+        utterance.voice=thaiVoices.find(v=>v.voiceURI===wanted)||thaiVoices[0];
+        let started=false,ended=false;
+        utterance.onstart=()=>{
+          if(token!==speakToken)return;
+          started=true;
+          $('voiceLabel').textContent='泰语发音：'+(utterance.voice?.name||'系统泰语语音');
+          $('audioDot').style.background='#78d2a3';
+        };
+        utterance.onend=()=>{
+          if(token!==speakToken)return;
+          ended=true;
+          currentSpeech=null;
+          finishSpeechTimers();
+        };
+        utterance.onerror=err=>{
+          if(token!==speakToken)return;
+          ended=true;currentSpeech=null;finishSpeechTimers();
+          const reason=err.error||'系统错误';
+          if(reason==='canceled'||reason==='interrupted'){
+            $('voiceLabel').textContent='发音被中断，请再点一次';
+          } else {
+            tryOnline(reason);
+          }
+        };
+        synth.speak(utterance);
+        // Do not cancel and fall back after a short 2–4-second startup delay:
+        // slow Android phones may start later; a premature cancel causes a loop.
+        speechSafetyTimer=setTimeout(()=>{
+          if(token!==speakToken || ended)return;
+          if(!started){
+            currentSpeech=null;
+            try{synth.cancel()}catch(_){}
+            $('voiceLabel').textContent='语音引擎没有响应，请点重新检测后再试';
+            $('audioDot').style.background='#e8a679';
+          }else if(synth.paused){
+            try{synth.resume()}catch(_){}
+          }
+        },12000);
+      }catch(err){currentSpeech=null;tryOnline('系统异常')}
+    };
+    if(wasActive){
+      queuedSpeechTimer=setTimeout(playNative,120);
+    } else {
+      playNative();
+    }
   }
   if('speechSynthesis' in window){ window.speechSynthesis.onvoiceschanged=pickVoices; setTimeout(pickVoices,300); setTimeout(pickVoices,1200); }
   pickVoices();
-  $('reloadVoices').onclick=()=>{try{window.speechSynthesis?.cancel()}catch(_){};pickVoices(); toast('已重新检测语音，可再点一次喇叭测试')};
+  $('reloadVoices').onclick=()=>{
+    ++speakToken;finishSpeechTimers();currentSpeech=null;
+    try{window.speechSynthesis?.cancel()}catch(_){}
+    if(fallbackAudio){try{fallbackAudio.pause()}catch(_){};fallbackAudio=null}
+    pickVoices();toast('语音已重置，请点喇叭重试');
+  };
   $('voiceSelect').onchange=()=>{selectedVoiceURI=$('voiceSelect').value; save('voiceURI',selectedVoiceURI); pickVoices()};
   $('testVoice').onclick=()=>speak('สวัสดีค่ะ ยินดีต้อนรับสู่การเรียนภาษาไทย');
 
