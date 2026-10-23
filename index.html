@@ -717,5 +717,56 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   if(all.length!==5000) toast(`已加载 ${all.length} 个词条，请检查数据是否完整`);
 })();
 </script>
+
+<style id="simple-password-gate-style">
+#simplePasswordGate{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;background:#17121f;color:#f7f0ff;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif}
+#simplePasswordGate .spg-card{width:min(100%,420px);padding:26px;border:1px solid #56446f;border-radius:22px;background:#251d31;box-shadow:0 16px 50px #0006}
+#simplePasswordGate h1{font-size:23px;line-height:1.35;margin:0 0 8px;color:#f7f0ff}
+#simplePasswordGate p{font-size:14px;line-height:1.7;color:#c9bbdd;margin:0 0 18px}
+#simplePasswordGate label{display:block;font-size:13px;margin:12px 0 6px;color:#d8c8f2}
+#simplePasswordGate input{width:100%;padding:13px;border:1px solid #65517e;border-radius:11px;background:#17121f;color:#fff;font-size:16px}
+#simplePasswordGate button{width:100%;padding:13px;border:0;border-radius:11px;background:#b699ff;color:#20152d;font-weight:750;font-size:15px;margin-top:13px}
+#simplePasswordGate #spgMessage{min-height:22px;font-size:13px;color:#f2d8a9;margin-top:10px}
+#simplePasswordGate .spg-note{font-size:12px;color:#a99abf;margin-top:12px}
+</style>
+<div id="simplePasswordGate" role="dialog" aria-modal="true" aria-labelledby="spgTitle">
+  <form class="spg-card" id="spgForm">
+    <h1 id="spgTitle">泰语 5000 词学习网站</h1>
+    <p>请输入老师提供的访问密码，验证后即可进入学习。</p>
+    <label for="spgPassword">访问密码</label>
+    <input id="spgPassword" type="password" autocomplete="current-password" placeholder="输入访问密码" required>
+    <button type="submit">进入学习</button>
+    <div id="spgMessage" aria-live="polite"></div>
+    <div class="spg-note">如果密码不正确，请联系老师获取最新密码。</div>
+  </form>
+</div>
+<script id="simple-password-gate-script">
+(() => {
+  // 需要更换密码时，只修改下一行引号里的内容。
+  const ACCESS_PASSWORD = "ThaiStudy-5086";
+  const UNLOCK_KEY = "thai5000_simple_access_unlocked_v1";
+  const gate = document.getElementById("simplePasswordGate");
+  const form = document.getElementById("spgForm");
+  const input = document.getElementById("spgPassword");
+  const message = document.getElementById("spgMessage");
+  try {
+    if (localStorage.getItem(UNLOCK_KEY) === "yes") {
+      gate.remove();
+      return;
+    }
+  } catch (_) {}
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (input.value === ACCESS_PASSWORD) {
+      try { localStorage.setItem(UNLOCK_KEY, "yes"); } catch (_) {}
+      gate.remove();
+    } else {
+      message.textContent = "密码不正确，请检查后重试。";
+      input.select();
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
