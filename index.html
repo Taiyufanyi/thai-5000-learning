@@ -172,7 +172,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
       <option selected value="1">中</option>
       <option value="1.12">中快</option>
     </select>
-    <span class="small">优先使用系统泰语语音；无语音时尝试在线备用音频。点击按钮播放</span>
+    <span class="small">安卓点读修复版 2026-10-23 C · Chrome 云端版优先系统语音</span>
   </div>
 
   <section id="words">
@@ -503,6 +503,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   }
 
   function speak(text){
+    // Apple branch is kept from the unified version already tested locally.
     if(isAppleMobile){speakOnApple(text,false);return}
     const clean=String(text||'').trim();
     if(!clean)return;
@@ -512,26 +513,21 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
       try{fallbackAudio.pause();fallbackAudio.src='';fallbackAudio.load()}catch(_){}
       fallbackAudio=null;
     }
-    const synth=('speechSynthesis' in window)?window.speechSynthesis:null;
-    const thaiVoices=synth?(synth.getVoices()||[]).filter(v=>String(v.lang||'').toLowerCase().startsWith('th')):[];
-    const tryOnline=(reason)=>{
+    const synth=('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window)?window.speechSynthesis:null;
+    let thaiVoices=[];
+    try{thaiVoices=synth?(synth.getVoices()||[]).filter(v=>String(v.lang||'').toLowerCase().startsWith('th')):[]}catch(_){}
+    const reportFailure=(reason)=>{
       if(token!==speakToken)return;
-      $('voiceLabel').textContent='系统语音未播放（'+reason+'），尝试在线音频…';
-      onlineThaiAudio(clean,token).catch(()=>{
-        if(token!==speakToken)return;
-        $('audioDot').style.background='#e8a679';
-        $('voiceLabel').textContent='本次发音失败：可点重新检测后重试';
-        toast('本次没有声音。请点“重新检测”，或查看手机文字转语音的泰语语音包。');
-      });
+      $('audioDot').style.background='#e8a679';
+      $('voiceLabel').textContent='发音未成功（'+reason+'）。请点“重新检测”后重试';
     };
-    if(!synth||!thaiVoices.length){tryOnline('未找到泰语语音');return}
-    const wasActive=!!currentSpeech || synth.speaking || synth.pending;
-    // When a learner taps again before the previous utterance finishes, release
-    // the old utterance, then allow Android's TTS service a brief reset.
-    if(wasActive){
-      try{synth.cancel()}catch(_){}
-      currentSpeech=null;
-    }
+    const onlineDirect=()=>{
+      // Called inside the original tap only if native speech is unavailable.
+      onlineThaiAudio(clean,token).catch(()=>reportFailure('系统及在线发音都不可用'));
+    };
+    if(!synth){onlineDirect();return}
+    const wasActive=!!currentSpeech||synth.speaking||synth.pending;
+    if(wasActive){try{synth.cancel()}catch(_){} currentSpeech=null;}
     const playNative=()=>{
       if(token!==speakToken)return;
       try{
@@ -540,51 +536,40 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
         utterance.lang='th-TH';
         utterance.rate=Number($('rate')?.value||1);
         const wanted=$('voiceSelect')?.value;
-        utterance.voice=thaiVoices.find(v=>v.voiceURI===wanted)||thaiVoices[0];
+        // Important: Chrome can return [] on HTTPS before voices have loaded.
+        // The native engine still can select its system Thai voice by lang.
+        // Do not redirect to Google's online TTS merely because list is empty.
+        utterance.voice=thaiVoices.find(v=>v.voiceURI===wanted)||thaiVoices[0]||null;
         let started=false,ended=false;
         utterance.onstart=()=>{
           if(token!==speakToken)return;
           started=true;
-          $('voiceLabel').textContent='泰语发音：'+(utterance.voice?.name||'系统泰语语音');
+          $('voiceLabel').textContent='泰语发音：'+(utterance.voice?.name||'系统自动选择语音');
           $('audioDot').style.background='#78d2a3';
         };
         utterance.onend=()=>{
           if(token!==speakToken)return;
-          ended=true;
-          currentSpeech=null;
-          finishSpeechTimers();
+          ended=true;currentSpeech=null;finishSpeechTimers();
         };
         utterance.onerror=err=>{
           if(token!==speakToken)return;
           ended=true;currentSpeech=null;finishSpeechTimers();
-          const reason=err.error||'系统错误';
-          if(reason==='canceled'||reason==='interrupted'){
-            $('voiceLabel').textContent='发音被中断，请再点一次';
-          } else {
-            tryOnline(reason);
+          if(err.error==='canceled'||err.error==='interrupted'){
+            $('voiceLabel').textContent='播放被中断，可再点一次';
+          }else{
+            reportFailure('系统语音 '+(err.error||'错误'));
           }
         };
         synth.speak(utterance);
-        // Do not cancel and fall back after a short 2–4-second startup delay:
-        // slow Android phones may start later; a premature cancel causes a loop.
         speechSafetyTimer=setTimeout(()=>{
-          if(token!==speakToken || ended)return;
-          if(!started){
-            currentSpeech=null;
-            try{synth.cancel()}catch(_){}
-            $('voiceLabel').textContent='语音引擎没有响应，请点重新检测后再试';
-            $('audioDot').style.background='#e8a679';
-          }else if(synth.paused){
-            try{synth.resume()}catch(_){}
-          }
+          if(token!==speakToken||ended)return;
+          if(!started){currentSpeech=null;try{synth.cancel()}catch(_){};reportFailure('系统语音超时')}
+          else if(synth.paused){try{synth.resume()}catch(_){}}
         },12000);
-      }catch(err){currentSpeech=null;tryOnline('系统异常')}
+      }catch(err){currentSpeech=null;reportFailure('系统语音异常')}
     };
-    if(wasActive){
-      queuedSpeechTimer=setTimeout(playNative,120);
-    } else {
-      playNative();
-    }
+    // Android Chrome on GitHub Pages: start within the original tap; do not delay by setTimeout.
+    playNative();
   }
   if('speechSynthesis' in window){ window.speechSynthesis.onvoiceschanged=pickVoices; setTimeout(pickVoices,300); setTimeout(pickVoices,1200); }
   pickVoices();
@@ -685,29 +670,12 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     let available=[];
     try{available=engine.getVoices()||[]}catch(_){}
     const thaiVoices=available.filter(v=>String(v.lang||'').toLowerCase().startsWith('th'));
-    if(!thaiVoices.length){
-      // Existing online fallback works for short utterances, but not necessarily
-      // for longer ones. Use original speak path for short sentences.
-      if(parts.length===1){speak(parts[0]);return;}
-      let n=0;
-      const playOnlinePart=()=>{
-        if(exampleSession!==playId)return;
-        const part=parts[n++];
-        if(!part)return;
-        const token=++speakToken;
-        onlineThaiAudio(part,token).then(()=>{
-          if(exampleSession===playId)playOnlinePart();
-        }).catch(()=>{
-          $('voiceLabel').textContent='例句在线发音失败，请检查手机泰语语音或网络';
-          $('audioDot').style.background='#e8a679';
-        });
-      };
-      playOnlinePart();return;
-    }
+    // Do not redirect long examples to Google Translate when voices are still loading.
+    // Explicit th-TH locale can select the system Thai voice even with an empty list.
     try{engine.cancel()}catch(_){}
     let partIndex=0;
     const currentId=speakToken;
-    const voice=thaiVoices.find(v=>v.voiceURI===$('voiceSelect')?.value)||thaiVoices[0];
+    const voice=thaiVoices.find(v=>v.voiceURI===$('voiceSelect')?.value)||thaiVoices[0]||null;
     function nextPart(){
       if(exampleSession!==playId||speakToken!==currentId)return;
       if(partIndex>=parts.length){
@@ -827,7 +795,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     quizItem=pool[Math.floor(Math.random()*pool.length)]; quizChecked=false;
     $('quizMeaning').textContent=(quizItem.senses?.[0]?.meaning)||quizItem.meaning||'释义未提供';
     $('quizExtra').textContent=`根据中文意思听音并拼写泰语 · No.${String(quizItem.id).padStart(4,'0')} · L${quizItem.level}`;
-    $('quizInput').value=''; $('feedback').textContent=''; $('quizInput').disabled=false; $('quizInput').focus(); updateScore();
+    $('quizInput').value=''; $('feedback').textContent=''; $('quizInput').disabled=false; if(!('ontouchstart' in window) && navigator.maxTouchPoints===0) $('quizInput').focus(); updateScore();
   }
   function check(){
     if(!quizItem || quizChecked) return;
@@ -842,7 +810,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   $('quizCheck').onclick=check;
   $('quizNext').onclick=()=>nextQuiz();
   $('quizWrong').onclick=()=>nextQuiz(true);
-  $('quizAudio').onclick=()=>{ if(quizItem) speak(quizItem.thai); };
+  $('quizAudio').onclick=()=>{ if(!quizItem)return; if(document.activeElement===$('quizInput')) $('quizInput').blur(); speak(quizItem.thai); };
   $('quizReveal').onclick=()=>{ if(!quizItem) return; if(!quizChecked){ total++; quizChecked=true; if(!wrong.includes(quizItem.id)) wrong.push(quizItem.id); updateScore(); } $('feedback').innerHTML=`答案：<strong lang="th">${escapeHTML(quizItem.thai)}</strong> <span class="small">/${escapeHTML(quizItem.ipa)}/</span>`; };
   $('quizAddFav').onclick=()=>{ if(!quizItem) return; toggleFav(quizItem.id); renderNotebook(); };
   $('quizInput').onkeydown=e=>{ if(e.key==='Enter'){ if(quizChecked) nextQuiz(); else check(); } };
