@@ -148,7 +148,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     <button class="tab" data-tab="notebook">生词本</button>
     <button class="tab" data-tab="quiz">拼写测试</button>
   </nav>
-<div id="releaseMark" style="position:absolute;right:14px;bottom:5px;font-size:11px;color:#b9add1">版本 2026.10.23 · 安卓连续点读修复</div></header>
+<div id="releaseMark" style="position:absolute;right:14px;bottom:5px;font-size:11px;color:#b9add1">版本 2026.10.23 · 拼写点读诊断 D</div></header>
 <main>
   <div class="toolbar">
     <div class="levels" id="levels"></div>
@@ -250,6 +250,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
       <div class="quiz-sub" id="quizExtra"></div>
       <div style="text-align:center;margin-top:6px">
         <button class="button" id="quizAudio">🔊 听泰语发音</button>
+        <span id="quizAudioStatus" aria-live="polite" style="display:block;font-size:12px;opacity:.82;margin:6px auto 0">点击喇叭测试拼写发音</span>
         <button class="button" id="quizReveal">显示答案</button>
       </div>
       <input id="quizInput" class="quiz-input" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="在这里输入泰语单词">
@@ -810,7 +811,76 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   $('quizCheck').onclick=check;
   $('quizNext').onclick=()=>nextQuiz();
   $('quizWrong').onclick=()=>nextQuiz(true);
-  $('quizAudio').onclick=()=>{ if(!quizItem)return; if(document.activeElement===$('quizInput')) $('quizInput').blur(); speak(quizItem.thai); };
+  // Dedicated quiz pronunciation for Android. Keep the previously working
+  // word/example and Apple speech paths unchanged.
+  let quizAudioAttempt=0;
+  function speakQuizAndroid(text){
+    const thai=String(text||'').trim();
+    if(!thai)return;
+    const attempt=++quizAudioAttempt;
+    const label=$('quizAudioStatus');
+    const status=t=>{if(attempt===quizAudioAttempt && label)label.textContent=t};
+    const engine=window.speechSynthesis;
+    if(!engine || !window.SpeechSynthesisUtterance){
+      status('系统语音不可用，正在尝试备用音频');
+      speak(thai);return;
+    }
+    ++speakToken;
+    finishSpeechTimers();
+    if(fallbackAudio){try{fallbackAudio.pause();fallbackAudio.src='';fallbackAudio.load()}catch(_){}fallbackAudio=null}
+    const token=speakToken;
+    let voices=[];
+    try{voices=engine.getVoices()||[]}catch(_){}
+    const thaiVoice=voices.find(v=>String(v.lang||'').toLowerCase().startsWith('th'))||null;
+    let begun=false,finished=false;
+    let nativeTimeout;
+    const u=new SpeechSynthesisUtterance(thai);
+    u.lang='th-TH';
+    u.rate=Number($('rate')?.value||1);
+    if(thaiVoice)u.voice=thaiVoice;
+    u.onstart=()=>{
+      if(attempt!==quizAudioAttempt)return;
+      begun=true;
+      clearTimeout(nativeTimeout);
+      status('正在朗读：'+(thaiVoice?.name||'系统泰语语音'));
+      $('audioDot').style.background='#78d2a3';
+    };
+    u.onend=()=>{
+      if(attempt!==quizAudioAttempt)return;
+      finished=true;clearTimeout(nativeTimeout);
+      currentSpeech=null;status('朗读完成');
+    };
+    u.onerror=e=>{
+      if(attempt!==quizAudioAttempt)return;
+      finished=true;clearTimeout(nativeTimeout);
+      const error=e.error||'unknown';
+      if(error==='canceled'||error==='interrupted')status('播放被中断，请再点一次');
+      else status('系统朗读失败（'+error+'），请试“重新检测语音”');
+    };
+    try{
+      engine.cancel();
+      // Android Chrome speech service sometimes needs a small gap after cancel.
+      // Retrying in a fresh task avoids the pending/canceled state; the button
+      // tap remains a user-initiated speech request.
+      status('启动朗读中…');
+      currentSpeech=u;
+      setTimeout(()=>{
+        if(attempt!==quizAudioAttempt || token!==speakToken)return;
+        try{engine.speak(u)}catch(err){status('启动失败：'+(err?.message||'未知错误'))}
+      },100);
+      nativeTimeout=setTimeout(()=>{
+        if(attempt!==quizAudioAttempt || finished || begun)return;
+        status('系统朗读未启动；请点击页面上方“重新检测语音”后重试');
+      },5000);
+    }catch(err){status('语音引擎异常：'+(err?.message||'未知错误'))}
+  }
+  $('quizAudio').setAttribute('type','button');
+  $('quizAudio').onclick=()=>{
+    if(!quizItem)return;
+    if(isAppleMobile){speak(quizItem.thai);return;}
+    // Do not change focus before starting the user-initiated speech request.
+    speakQuizAndroid(quizItem.thai);
+  };
   $('quizReveal').onclick=()=>{ if(!quizItem) return; if(!quizChecked){ total++; quizChecked=true; if(!wrong.includes(quizItem.id)) wrong.push(quizItem.id); updateScore(); } $('feedback').innerHTML=`答案：<strong lang="th">${escapeHTML(quizItem.thai)}</strong> <span class="small">/${escapeHTML(quizItem.ipa)}/</span>`; };
   $('quizAddFav').onclick=()=>{ if(!quizItem) return; toggleFav(quizItem.id); renderNotebook(); };
   $('quizInput').onkeydown=e=>{ if(e.key==='Enter'){ if(quizChecked) nextQuiz(); else check(); } };
