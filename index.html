@@ -132,11 +132,11 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
 /* 学习进度标记：维持之前用户确认的字体与卡片尺寸 */
 .resume-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;padding:9px 12px;margin:5px 0 12px;border:1px solid var(--line);border-radius:13px;background:var(--panel);color:var(--soft);font-size:13px}
 .resume-bar .button{padding:6px 10px;font-size:13px}
-.mark-progress{background:#352943;border:1px solid #56436b;color:#d8c6fa;border-radius:10px;font-size:12px;padding:5px 9px;white-space:nowrap}
+.mark-progress{font-weight:700;background:#352943;border:1px solid #56436b;color:#d8c6fa;border-radius:10px;font-size:12px;padding:5px 9px;white-space:nowrap}
 .mark-progress.selected{color:#adf0ce;border-color:#66bd9b;background:#2b453c}
 .word-card.study-position{border-color:#78d2a3;box-shadow:0 0 0 1px #78d2a366}
 .word-card{scroll-margin-top:170px}
-@media(max-width:700px){.resume-bar{font-size:12px}.mark-progress{font-size:11px;padding:4px 7px}.word-card{scroll-margin-top:125px}}
+@media(max-width:700px){.resume-bar{font-size:12px}.mark-progress{font-weight:700;font-size:11px;padding:4px 7px}.word-card{scroll-margin-top:125px}}
 </style>
 </head>
 <body>
@@ -148,7 +148,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     <button class="tab" data-tab="notebook">生词本</button>
     <button class="tab" data-tab="quiz">拼写测试</button>
   </nav>
-</header>
+<div id="releaseMark" style="position:absolute;right:14px;bottom:5px;font-size:11px;color:#b9add1">版本 2026.10.23 · 安卓发音稳定版</div></header>
 <main>
   <div class="toolbar">
     <div class="levels" id="levels"></div>
@@ -350,10 +350,10 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
       return;
     }
     try {
-      await navigator.serviceWorker.register('./sw.js');
+      await navigator.serviceWorker.register('./sw.js?v=20261023-3', {updateViaCache:'none'});
       await navigator.serviceWorker.ready;
       swReady = true;
-      $('cacheStatus').textContent='音频缓存：已启用，点读后尝试保存 MP3';
+      $('cacheStatus').textContent='音频缓存：已启用（手动缓存音频）';
     } catch (e) {
       $('cacheStatus').textContent='音频缓存：未启用，请确保 sw.js 与网页同目录';
     }
@@ -415,47 +415,88 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   $('cacheCurrentAudio').onclick=cacheCurrentWord;
   initAudioCache();
 
-  async function speak(text){
+  // Android speech engines may stall after repeated taps. Keep only one active
+  // utterance and one watchdog, and never let an old callback interrupt a new tap.
+  let speechWatchdog=null;
+  let speechStartTimer=null;
+  let activeUtterance=null;
+  function clearSpeechTimers(){
+    if(speechWatchdog){clearInterval(speechWatchdog);speechWatchdog=null}
+    if(speechStartTimer){clearTimeout(speechStartTimer);speechStartTimer=null}
+  }
+  function speak(text){
     const clean=String(text||'').trim();
-    if(!clean) return;
+    if(!clean)return;
     const token=++speakToken;
-    if(fallbackAudio){ fallbackAudio.pause(); fallbackAudio.src=''; fallbackAudio=null; }
-    if(await playCachedAudio(clean, token)) return;
-    cacheAudio(clean, true);
-    const rate=Number($('rate')?.value||1);
-    const hasSpeech=('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
-    const thaiVoices=hasSpeech ? window.speechSynthesis.getVoices().filter(v=>String(v.lang||'').toLowerCase().startsWith('th')) : [];
-    // No native Thai voice: go straight to online fallback, which avoids Android's
-    // missing Thai voice package when Google TTS is reachable.
-    if(!hasSpeech || !thaiVoices.length){
-      onlineThaiAudio(clean,token).catch(()=>toast('未检测到系统泰语语音，在线备用音频也无法访问。请检查网络后重试。'));
-      return;
+    clearSpeechTimers();
+    if(fallbackAudio){
+      try{fallbackAudio.pause();fallbackAudio.removeAttribute('src');fallbackAudio.load()}catch(_){}
+      fallbackAudio=null;
     }
+    const hasSpeech=('speechSynthesis' in window)&&('SpeechSynthesisUtterance' in window);
+    const engine=hasSpeech?window.speechSynthesis:null;
+    let nativeVoices=[];
+    if(engine){
+      try{nativeVoices=engine.getVoices().filter(v=>String(v.lang||'').toLowerCase().startsWith('th'))}catch(_){}
+      try{engine.cancel()}catch(_){}
+    }
+    const fallback=(reason)=>{
+      if(token!==speakToken)return;
+      clearSpeechTimers();
+      activeUtterance=null;
+      try{engine?.cancel()}catch(_){}
+      // Start the remote audio source only after native speech cannot start.
+      // It may be blocked on some networks; display a helpful failure message.
+      onlineThaiAudio(clean,token).catch(()=>{
+        if(token!==speakToken)return;
+        $('voiceLabel').textContent='泰语发音未成功，请检查手机泰语语音包或网络';
+        $('audioDot').style.background='#e8a679';
+        toast('语音暂停了：请点“重新检测语音”，或检查手机的泰语文字转语音设置。');
+      });
+    };
+    if(!engine||!nativeVoices.length){fallback('no-voice');return}
     try{
-      window.speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(clean);
-      u.lang='th-TH'; u.rate=rate;
+      activeUtterance=u;
+      u.lang='th-TH';
+      u.rate=Number($('rate')?.value||1);
+      u.pitch=1;
       const selected=$('voiceSelect')?.value;
-      u.voice=thaiVoices.find(v=>v.voiceURI===selected)||thaiVoices.find(v=>/natural|online|premium/i.test(v.name))||thaiVoices[0];
-      let settled=false, started=false;
-      const fallback=()=>{
-        if(settled||token!==speakToken)return;
-        settled=true;
-        try{window.speechSynthesis.cancel()}catch{}
-        onlineThaiAudio(clean,token).catch(()=>toast('系统语音和在线备用音频均不可用，请检查网络及泰语语音设置。'));
+      u.voice=nativeVoices.find(v=>v.voiceURI===selected)||nativeVoices[0];
+      let started=false,done=false;
+      u.onstart=()=>{
+        if(token!==speakToken)return;
+        started=true;
+        if(speechStartTimer){clearTimeout(speechStartTimer);speechStartTimer=null}
+        $('voiceLabel').textContent='泰语发音：'+(u.voice?.name||'系统泰语语音');
+        $('audioDot').style.background='#78d2a3';
       };
-      const timer=setTimeout(()=>{if(!started)fallback()},2800);
-      u.onstart=()=>{started=true;clearTimeout(timer);$('voiceLabel').textContent='泰语发音：'+(u.voice?.name||'系统泰语语音');$('audioDot').style.background='#78d2a3';};
-      u.onend=()=>{settled=true;clearTimeout(timer);};
-      u.onerror=()=>{clearTimeout(timer);fallback();};
-      window.speechSynthesis.speak(u);
-    }catch(err){
-      onlineThaiAudio(clean,token).catch(()=>toast('发音失败，请检查网络及语音设置。'));
-    }
+      u.onend=()=>{
+        if(token!==speakToken)return;
+        done=true;activeUtterance=null;clearSpeechTimers();
+      };
+      u.onerror=e=>{
+        if(token!==speakToken||done)return;
+        done=true;
+        // interruption/cancellation is expected if the learner taps another word
+        if(e.error==='interrupted'||e.error==='canceled'){clearSpeechTimers();return}
+        fallback(e.error);
+      };
+      // Android / Chrome may report speaking while stuck. resume() is a
+      // low-impact watchdog; the start timeout can switch to online audio.
+      speechStartTimer=setTimeout(()=>{
+        if(token===speakToken&&!started&&!done)fallback('start-timeout');
+      },4200);
+      speechWatchdog=setInterval(()=>{
+        if(token!==speakToken||done){clearSpeechTimers();return}
+        try{if(engine.paused)engine.resume()}catch(_){}
+      },1600);
+      engine.speak(u);
+    }catch(e){fallback('exception')}
   }
   if('speechSynthesis' in window){ window.speechSynthesis.onvoiceschanged=pickVoices; setTimeout(pickVoices,300); setTimeout(pickVoices,1200); }
   pickVoices();
-  $('reloadVoices').onclick=()=>{pickVoices(); toast('已重新检测语音')};
+  $('reloadVoices').onclick=()=>{try{window.speechSynthesis?.cancel()}catch(_){};pickVoices(); toast('已重新检测语音，可再点一次喇叭测试')};
   $('voiceSelect').onchange=()=>{selectedVoiceURI=$('voiceSelect').value; save('voiceURI',selectedVoiceURI); pickVoices()};
   $('testVoice').onclick=()=>speak('สวัสดีค่ะ ยินดีต้อนรับสู่การเรียนภาษาไทย');
 
