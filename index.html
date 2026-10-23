@@ -48,60 +48,60 @@ main{max-width:1180px;padding:22px 20px 70px;margin:auto}
 .search:focus{border-color:var(--purple)}
 .audio-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;color:var(--muted);font-size:14px;margin:18px 0 20px;padding:14px 16px;background:rgba(41,31,58,.55);border:1px solid var(--line);border-radius:18px}
 .dot{width:11px;height:11px;background:var(--mint);border-radius:50%;display:inline-block;flex:0 0 auto}
-.button{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:9px 16px;color:#d3befa;transition:.15s}
+.button{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:7px 12px;color:#d3befa;transition:.15s}
 .button:hover{border-color:var(--purple)}
 .button:disabled{opacity:.45;cursor:not-allowed}
 select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:12px;padding:8px}
 .meta{color:#b8a5df;margin:0 0 14px}
-.word-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;margin:12px 0;padding:22px 25px;box-shadow:0 3px 20px #0d071320}
-.word-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.thai{font-size:31px;font-weight:650;line-height:1.5}
-.ipa{color:#7acbe8;font-family:Georgia,serif;font-size:17px}
-.rank{color:#aa9ac9;font-size:14px}.tag{background:#8d6ed3;color:white;font-size:13px;border-radius:7px;padding:3px 9px}
+.word-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;margin:9px 0;padding:14px 16px;box-shadow:0 3px 16px #0d071320}
+.word-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.thai{font-size:24px;font-weight:650;line-height:1.25}
+.ipa{color:#7acbe8;font-family:Georgia,serif;font-size:15px}
+.rank{color:#aa9ac9;font-size:13px}.tag{background:#8d6ed3;color:white;font-size:12px;border-radius:7px;padding:2px 8px}
 .spacer{flex:1}
-.round{border:0;border-radius:50%;background:#332747;color:#c5a7ff;width:42px;height:42px;font-size:19px}
+.round{border:0;border-radius:50%;background:#332747;color:#c5a7ff;width:36px;height:36px;font-size:16px}
 .round.fav{background:#7056ae;color:white}
-.sense{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;margin-top:20px}
-.count{color:#a889fb;font-size:25px}
-.meaning{font-weight:650;font-size:20px}
-.example{margin-top:8px;display:flex;align-items:flex-start;gap:12px}
-.example .th{font-size:20px}
-.translation{color:#b9a5df;font-size:17px}
+.sense{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;margin-top:12px}
+.count{color:#a889fb;font-size:18px}
+.meaning{font-weight:650;font-size:16px;line-height:1.35}
+.example{margin-top:5px;display:flex;align-items:flex-start;gap:10px}
+.example .th{font-size:16px;line-height:1.35}
+.translation{color:#b9a5df;font-size:14px;line-height:1.35}
 .pagination{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:25px 0}
 .empty{padding:50px 15px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:15px}
 .hidden{display:none!important}
-.study-box{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;margin-top:18px}
+.study-box{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;margin-top:12px}
 .study-top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
 .stats{display:flex;gap:15px;flex-wrap:wrap;color:#d2bdf8}.small{font-size:13px;color:var(--muted)}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:10px 20px;background:#634595;color:white;border-radius:14px;box-shadow:0 7px 25px #0006;display:none;z-index:50;max-width:90vw}
 .toggle{display:flex;gap:10px;align-items:center;color:var(--muted)}
 .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:stretch}
-.flashcard{position:relative;min-height:430px;border-radius:28px;overflow:hidden;border:1px solid var(--line2);background:linear-gradient(160deg,#261d36 0%,#2f2344 45%,#1c1628 100%);box-shadow:0 18px 42px rgba(0,0,0,.24);padding:28px;display:flex;flex-direction:column;justify-content:space-between}
+.flashcard{position:relative;min-height:320px;border-radius:24px;overflow:hidden;border:1px solid var(--line2);background:linear-gradient(160deg,#261d36 0%,#2f2344 45%,#1c1628 100%);box-shadow:0 14px 32px rgba(0,0,0,.22);padding:18px;display:flex;flex-direction:column;justify-content:space-between}
 .flashcard::before,.flashcard::after{content:"";position:absolute;border-radius:50%;filter:blur(0.3px);opacity:.16;pointer-events:none}
-.flashcard::before{width:220px;height:220px;background:#a88aff;top:-30px;right:-50px}
-.flashcard::after{width:180px;height:180px;background:#71d3ff;bottom:-30px;left:-30px}
+.flashcard::before{width:160px;height:160px;background:#a88aff;top:-24px;right:-40px}
+.flashcard::after{width:130px;height:130px;background:#71d3ff;bottom:-24px;left:-24px}
 .card-front,.card-back{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;gap:18px}
 .card-badges{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);color:#e7dcff;font-size:13px}
 .badge.level{background:rgba(156,123,230,.18)}
-.hero-word{display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px 0}
-.hero-word .th-large{font-size:clamp(44px,7.5vw,86px);line-height:1.15;font-weight:700;letter-spacing:.02em;text-shadow:0 8px 26px rgba(0,0,0,.2)}
-.hero-word .hero-ipa{font-size:clamp(24px,4vw,46px);line-height:1.2;color:#88d8f5;font-family:Georgia,serif}
-.hero-word .hero-sub{font-size:20px;color:#d2b8ff;margin-top:10px}
-.tap-tip{align-self:center;background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.16);padding:10px 16px;border-radius:999px;color:#ccb8f2}
+.hero-word{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0}
+.hero-word .th-large{font-size:clamp(32px,5.2vw,62px);line-height:1.05;font-weight:700;letter-spacing:.02em;text-shadow:0 6px 18px rgba(0,0,0,.18)}
+.hero-word .hero-ipa{font-size:clamp(18px,3vw,32px);line-height:1.15;color:#88d8f5;font-family:Georgia,serif}
+.hero-word .hero-sub{font-size:15px;color:#d2b8ff;margin-top:5px}
+.tap-tip{align-self:center;background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.16);padding:7px 13px;border-radius:999px;color:#ccb8f2;font-size:13px}
 .card-back .hero-word{padding-top:10px}
-.meaning-box{background:rgba(18,14,26,.58);backdrop-filter: blur(4px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px}
-.meaning-main{font-size:28px;font-weight:700;line-height:1.4}
-.meaning-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-.meaning-chip{padding:8px 12px;border-radius:999px;background:#8d6ed3;color:white;font-size:14px;max-width:100%}
-.example-box{margin-top:14px;padding:15px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
-.example-box .th{font-size:22px}
-.example-box .translation{font-size:16px}
-.card-side{color:#b9a5df;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.meaning-box{background:rgba(18,14,26,.58);backdrop-filter: blur(4px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px}
+.meaning-main{font-size:20px;font-weight:700;line-height:1.35}
+.meaning-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.meaning-chip{padding:5px 10px;border-radius:999px;background:#8d6ed3;color:white;font-size:12px;max-width:100%}
+.example-box{margin-top:10px;padding:10px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+.example-box .th{font-size:16px;line-height:1.35}
+.example-box .translation{font-size:13px;line-height:1.35}
+.card-side{color:#b9a5df;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
 .card-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.big-review{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
-.review-btn{border:0;border-radius:16px;padding:12px 8px;text-align:center;color:white;font-weight:700;min-height:66px;font-size:15px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.16)}
-.review-btn span{display:block;font-size:12px;opacity:.9;font-weight:500;margin-top:1px}
+.big-review{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+.review-btn{border:0;border-radius:14px;padding:8px 6px;text-align:center;color:white;font-weight:700;min-height:50px;font-size:13px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 6px 14px rgba(0,0,0,.14)}
+.review-btn span{display:block;font-size:10px;opacity:.9;font-weight:500;margin-top:0}
 .review-btn.red{background:var(--redbtn)}
 .review-btn.yellow{background:var(--yellowbtn)}
 .review-btn.green{background:var(--greenbtn)}
@@ -118,16 +118,25 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
 .notebook-card .mini-meaning{font-size:18px;font-weight:600;margin:8px 0 4px}
 .notebook-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .notice{padding:12px 14px;border-radius:16px;background:#261e35;border:1px solid var(--line);color:#cbbce8}
-.quiz-prompt{font-size:34px;text-align:center;margin:22px 0 6px;line-height:1.35}
-.quiz-sub{color:#cebaf4;text-align:center;font-size:13px;line-height:1.4}
-.quiz-input{display:block;width:100%;max-width:580px;margin:20px auto;background:#130f1b;border:2px solid #55456b;border-radius:15px;color:#fff;padding:16px 20px;font-size:30px;text-align:center}
-.feedback{text-align:center;min-height:52px;font-size:18px}
+.quiz-prompt{font-size:24px;text-align:center;margin:10px 0 4px;line-height:1.25}
+.quiz-sub{color:#cebaf4;text-align:center;font-size:11px;line-height:1.3;margin-bottom:4px}
+.quiz-input{display:block;width:100%;max-width:520px;margin:10px auto;background:#130f1b;border:2px solid #55456b;border-radius:13px;color:#fff;padding:10px 14px;font-size:22px;text-align:center}
+.feedback{text-align:center;min-height:34px;font-size:15px;margin-top:4px}
 .voice-select{max-width:320px;min-width:180px}
-@media(max-width:950px){.hero-grid{grid-template-columns:1fr}.flashcard{min-height:380px}.big-review{grid-template-columns:1fr 1fr 1fr}}
-@media(max-width:700px){header{padding:18px 14px 0}.brand small{display:block}.tab{font-size:16px;padding:12px 10px}.search{min-width:100%}.word-card{padding:16px}.thai{font-size:29px}.meaning{font-size:18px}.sense{gap:4px}.audio-bar{font-size:12px}.study-box{padding:16px}.flashcard{padding:16px;min-height:350px;border-radius:22px}.hero-word .th-large{font-size:46px}.hero-word .hero-ipa{font-size:30px}.meaning-main{font-size:22px}.big-review{grid-template-columns:1fr;gap:10px}.review-btn{min-height:60px;border-radius:14px;padding:10px 6px;font-size:14px}.quiz-prompt{font-size:28px}.quiz-input{font-size:26px;padding:14px}}
+@media(max-width:950px){.hero-grid{grid-template-columns:1fr}.flashcard{min-height:300px}.big-review{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:700px){header{padding:16px 12px 0}.brand small{display:block}.tab{font-size:15px;padding:10px 8px}.search{min-width:100%}.word-card{padding:12px}.thai{font-size:22px}.meaning{font-size:15px}.sense{gap:4px}.audio-bar{font-size:12px}.study-box{padding:12px}.flashcard{padding:14px;min-height:290px;border-radius:20px}.hero-word .th-large{font-size:38px}.hero-word .hero-ipa{font-size:24px}.meaning-main{font-size:18px}.big-review{grid-template-columns:1fr;gap:8px}.review-btn{min-height:48px;border-radius:12px;padding:8px 6px;font-size:13px}.quiz-prompt{font-size:22px}.quiz-input{font-size:20px;padding:10px 12px}}
 
 .cross-level-toggle{display:flex;align-items:center;gap:7px;color:var(--muted,#b8aaca);font-size:13px;white-space:nowrap;padding:5px 2px}
 .cross-level-toggle input{width:16px;height:16px;accent-color:var(--purple,#9a7be5)}
+
+/* 学习进度标记：维持之前用户确认的字体与卡片尺寸 */
+.resume-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;padding:9px 12px;margin:5px 0 12px;border:1px solid var(--line);border-radius:13px;background:var(--panel);color:var(--soft);font-size:13px}
+.resume-bar .button{padding:6px 10px;font-size:13px}
+.mark-progress{background:#352943;border:1px solid #56436b;color:#d8c6fa;border-radius:10px;font-size:12px;padding:5px 9px;white-space:nowrap}
+.mark-progress.selected{color:#adf0ce;border-color:#66bd9b;background:#2b453c}
+.word-card.study-position{border-color:#78d2a3;box-shadow:0 0 0 1px #78d2a366}
+.word-card{scroll-margin-top:170px}
+@media(max-width:700px){.resume-bar{font-size:12px}.mark-progress{font-size:11px;padding:4px 7px}.word-card{scroll-margin-top:125px}}
 </style>
 </head>
 <body>
@@ -167,6 +176,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   </div>
 
   <section id="words">
+    <div id="resumeBar" class="resume-bar"><span id="resumeMessage">还没有标记学习位置。可点击词条的「学到这里」。</span><button class="button" id="resumeButton" type="button" disabled>↪ 继续上次学习</button></div>
     <p class="meta" id="meta"></p>
     <div id="wordList"></div>
     <div class="pagination" id="pagination"></div>
@@ -232,19 +242,19 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
         <strong>拼写测试 · 直接显示中文意思</strong>
         <div class="stats" id="quizScore"></div>
       </div>
-      <div class="study-controls row" style="margin-top:14px">
+      <div class="study-controls row" style="margin-top:8px">
         <label class="toggle"><input type="checkbox" id="quizKnown"> 优先测试未掌握的词</label>
         <label class="toggle"><input type="checkbox" id="quizFav"> 只测试生词本</label>
       </div>
       <p class="quiz-prompt" id="quizMeaning"></p>
       <div class="quiz-sub" id="quizExtra"></div>
-      <div style="text-align:center;margin-top:14px">
+      <div style="text-align:center;margin-top:6px">
         <button class="button" id="quizAudio">🔊 听泰语发音</button>
         <button class="button" id="quizReveal">显示答案</button>
       </div>
       <input id="quizInput" class="quiz-input" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="在这里输入泰语单词">
       <div class="feedback" id="feedback"></div>
-      <div class="study-controls row" style="justify-content:center">
+      <div class="study-controls row" style="justify-content:center;gap:8px;margin-top:4px">
         <button class="button" id="quizCheck">检查答案</button>
         <button class="button" id="quizNext">下一题 →</button>
         <button class="button" id="quizWrong">重练错题</button>
@@ -265,6 +275,9 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   let level=1,tab='words',page=0,onlyFav=false,cardIndex=0,flipped=false,quizItem=null,quizChecked=false,correct=0,total=0,wrong=[];
   const save=(k,v)=>{try{localStorage.setItem('thai5000_'+k,JSON.stringify(v))}catch{}};
   const load=(k,d)=>{try{return JSON.parse(localStorage.getItem('thai5000_'+k))??d}catch{return d}};
+  let progress=load('progress_v1',null), lastPages=load('lastPages_v1',{});
+  if(progress && Number.isInteger(progress.id) && progress.id>=1 && progress.id<=5000){level=Math.ceil(progress.id/1000);page=Math.floor(((progress.id-1)%1000)/10)}
+  else if(Number.isInteger(lastPages['1'])) page=lastPages['1'];
   let favorites=new Set(load('favs',[])), known=new Set(load('known',[])), reviewState=load('reviewState',{}), selectedVoiceURI=load('voiceURI','');
   let voices=[]; let speechUnlocked=false;
   const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -395,7 +408,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     let currentText='';
     if(tab==='cards'){ const w=cardPool()[cardIndex]; currentText=w?.thai||''; }
     else if(tab==='quiz'){ currentText=quizItem?.thai||''; }
-    else { const w=basePool()[page*20]; currentText=w?.thai||''; }
+    else { const w=basePool()[page*10]; currentText=w?.thai||''; }
     if(!currentText){toast('请先选择一个单词');return}
     await cacheAudio(currentText);
   }
@@ -453,23 +466,47 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
   }
   function makeLevels(){
     $('levels').innerHTML=[1,2,3,4,5].map(l=>`<button class="pill ${l===level?'active':''}" data-level="${l}">L${l}</button>`).join('');
-    $('levels').querySelectorAll('button').forEach(b=>b.onclick=()=>{level=Number(b.dataset.level);if($('crossLevel'))$('crossLevel').checked=false;page=0;cardIndex=0;quizItem=null;makeLevels();render()});
+    $('levels').querySelectorAll('button').forEach(b=>b.onclick=()=>{level=Number(b.dataset.level);if($('crossLevel'))$('crossLevel').checked=false;page=Number(lastPages[String(level)]||0);cardIndex=0;quizItem=null;makeLevels();render()});
   }
+
+  function renderResumeBar(){
+    const w=all.find(x=>x.id===progress?.id);
+    $('resumeButton').disabled=!w;
+    $('resumeMessage').textContent=w?`上次标记：L${w.level} · No.${String(w.id).padStart(4,'0')} · ${w.thai}（${w.senses?.[0]?.meaning||w.meaning||''}）`:'还没有标记学习位置。可点击词条的「学到这里」。';
+  }
+  function markStudyPosition(id){
+    const w=all.find(x=>x.id===id);if(!w)return;
+    progress={id:w.id,level:w.level,savedAt:Date.now()};save('progress_v1',progress);
+    lastPages[String(w.level)]=Math.floor(((w.id-1)%1000)/10);save('lastPages_v1',lastPages);
+    renderWords();toast(`已记住 No.${String(w.id).padStart(4,'0')}，下次可以继续学习`);
+  }
+  function resumeStudy(){
+    const w=all.find(x=>x.id===progress?.id);if(!w){toast('请先在词条上点击「学到这里」');return}
+    tab='words';onlyFav=false;$('favonly').textContent='☆ 仅看生词本';
+    $('search').value='';$('crossLevel').checked=false;
+    level=w.level;page=Math.floor(((w.id-1)%1000)/10);
+    makeLevels();setTabUI();renderWords();
+    requestAnimationFrame(()=>document.querySelector(`[data-word-id="${w.id}"]`)?.scrollIntoView({block:'start',behavior:'smooth'}));
+  }
+  $('resumeButton').onclick=resumeStudy;
 
   function renderWords(){
     let list=basePool();
-    const pages=Math.max(1,Math.ceil(list.length/20));
-    page=Math.min(page,pages-1);
-    $('meta').textContent=($('crossLevel')?.checked?`跨等级 L1–L5：共 ${list.length} 个匹配词条`:`L${level}：第 ${(level-1)*1000+1}–${level*1000} 词，共 ${list.length} 个匹配词条`)+' · 每页 20 个';
-    const subset=list.slice(page*20,page*20+20);
-    $('wordList').innerHTML=subset.length ? subset.map(w=>`<article class="word-card"><div class="word-title"><strong class="thai" lang="th">${escapeHTML(w.thai)}</strong><span class="ipa">/${escapeHTML(w.ipa)}/</span><span class="rank">No. ${String(w.id).padStart(4,'0')}</span><span class="tag">L${w.level}</span><div class="spacer"></div><button class="round" data-speak="${w.id}" title="播放单词">🔊</button><button class="round ${favorites.has(w.id)?'fav':''}" data-fav="${w.id}" title="加入生词本">${favorites.has(w.id)?'★':'☆'}</button></div>${(w.senses&&w.senses.length?w.senses:[{meaning:w.meaning||'原文未提供释义',example:'',translation:''}]).map((s,i)=>`<div class="sense"><div class="count">${ord[i]||'•'}</div><div><div class="meaning">${escapeHTML(s.meaning||w.meaning||'释义未提供')}</div>${s.example?`<div class="example"><button class="round" data-example="${w.id}:${i}" title="朗读例句">🔈</button><div><div class="th" lang="th">${escapeHTML(s.example)}</div><div class="translation">${escapeHTML(s.translation||'')}</div></div></div>`:''}</div></div>`).join('')}</article>`).join('') : '<div class="empty">暂无匹配词条。尝试取消“仅看生词本”或换一个搜索词。</div>';
-    $('pagination').innerHTML = list.length>20 ? `<button class="button" id="prevPage" ${page===0?'disabled':''}>上一页</button><span>第 ${page+1} / ${pages} 页</span><button class="button" id="nextPage" ${page>=pages-1?'disabled':''}>下一页</button><input id="jumpPage" type="number" min="1" max="${pages}" placeholder="页码" style="width:74px;background:#161020;color:white;border:1px solid #50405e;border-radius:10px;padding:7px"><button class="button" id="jumpBtn">跳转</button>` : '';
-    if(list.length>20){ $('prevPage').onclick=()=>movePage(-1); $('nextPage').onclick=()=>movePage(1); $('jumpBtn').onclick=()=>{const n=Number($('jumpPage').value); if(n>=1&&n<=pages){page=n-1; renderWords(); window.scrollTo({top:0,behavior:'smooth'})}}; }
+    const pages=Math.max(1,Math.ceil(list.length/10));
+    page=Math.max(0,Math.min(page,pages-1));
+    if(!$('search').value.trim() && !onlyFav && !$('crossLevel')?.checked){lastPages[String(level)]=page;save('lastPages_v1',lastPages)}
+    renderResumeBar();
+    $('meta').textContent=($('crossLevel')?.checked?`跨等级 L1–L5：共 ${list.length} 个匹配词条`:`L${level}：第 ${(level-1)*1000+1}–${level*1000} 词，共 ${list.length} 个匹配词条`)+' · 每页 10 个';
+    const subset=list.slice(page*10,page*10+10);
+    $('wordList').innerHTML=subset.length ? subset.map(w=>`<article class="word-card ${progress?.id===w.id?'study-position':''}" data-word-id="${w.id}"><div class="word-title"><strong class="thai" lang="th">${escapeHTML(w.thai)}</strong><span class="ipa">/${escapeHTML(w.ipa)}/</span><span class="rank">No. ${String(w.id).padStart(4,'0')}</span><span class="tag">L${w.level}</span><div class="spacer"></div><button class="mark-progress ${progress?.id===w.id?'selected':''}" data-bookmark="${w.id}">${progress?.id===w.id?'✓ 已标记':'📍 学到这里'}</button><button class="round" data-speak="${w.id}" title="播放单词">🔊</button><button class="round ${favorites.has(w.id)?'fav':''}" data-fav="${w.id}" title="加入生词本">${favorites.has(w.id)?'★':'☆'}</button></div>${(w.senses&&w.senses.length?w.senses:[{meaning:w.meaning||'原文未提供释义',example:'',translation:''}]).map((s,i)=>`<div class="sense"><div class="count">${ord[i]||'•'}</div><div><div class="meaning">${escapeHTML(s.meaning||w.meaning||'释义未提供')}</div>${s.example?`<div class="example"><button class="round" data-example="${w.id}:${i}" title="朗读例句">🔈</button><div><div class="th" lang="th">${escapeHTML(s.example)}</div><div class="translation">${escapeHTML(s.translation||'')}</div></div></div>`:''}</div></div>`).join('')}</article>`).join('') : '<div class="empty">暂无匹配词条。尝试取消“仅看生词本”或换一个搜索词。</div>';
+    $('pagination').innerHTML = list.length>10 ? `<button class="button" id="prevPage" ${page===0?'disabled':''}>上一页</button><span>第 ${page+1} / ${pages} 页</span><button class="button" id="nextPage" ${page>=pages-1?'disabled':''}>下一页</button><input id="jumpPage" type="number" min="1" max="${pages}" placeholder="页码" style="width:74px;background:#161020;color:white;border:1px solid #50405e;border-radius:10px;padding:7px"><button class="button" id="jumpBtn">跳转</button>` : '';
+    if(list.length>10){ $('prevPage').onclick=()=>movePage(-1); $('nextPage').onclick=()=>movePage(1); $('jumpBtn').onclick=()=>{const n=Number($('jumpPage').value); if(n>=1&&n<=pages){page=n-1; renderWords(); window.scrollTo({top:0,behavior:'smooth'})}}; }
   }
   function movePage(d){ page+=d; renderWords(); window.scrollTo({top:0,behavior:'smooth'}) }
   $('wordList').onclick=e=>{
     const b=e.target.closest('button'); if(!b) return;
-    if(b.dataset.speak){ const w=all.find(x=>x.id===+b.dataset.speak); if(w) speak(w.thai); }
+    if(b.dataset.bookmark){ markStudyPosition(Number(b.dataset.bookmark)); }
+    else if(b.dataset.speak){ const w=all.find(x=>x.id===+b.dataset.speak); if(w) speak(w.thai); }
     else if(b.dataset.example){ let [id,i]=b.dataset.example.split(':').map(Number); const w=all.find(x=>x.id===id); if(w?.senses?.[i]?.example) speak(w.senses[i].example); }
     else if(b.dataset.fav){ toggleFav(Number(b.dataset.fav)); renderWords(); }
   };
@@ -501,7 +538,7 @@ select{color:#fff;background:#18121f;border:1px solid var(--line);border-radius:
     if(!flipped){
       $('studyCard').innerHTML=`<div class="card-front"><div class="card-badges"><span class="badge level">L${w.level}</span><span class="badge">No.${String(w.id).padStart(4,'0')}</span></div><div class="hero-word"><div class="card-side">FLASH CARD</div><div class="th-large" lang="th">${escapeHTML(w.thai)}</div><div class="hero-ipa">/${escapeHTML(w.ipa)}/</div><div class="hero-sub">请先回忆中文意思</div></div><div class="tap-tip">点击卡片翻面查看答案</div></div>`;
     }else{
-      $('studyCard').innerHTML=`<div class="card-back"><div class="card-badges"><span class="badge level">L${w.level}</span><span class="badge">No.${String(w.id).padStart(4,'0')}</span></div><div class="hero-word"><div class="card-side">ANSWER</div><div class="th-large" lang="th" style="font-size:42px">${escapeHTML(w.thai)}</div><div class="hero-ipa">/${escapeHTML(w.ipa)}/</div></div><div class="meaning-box"><div class="meaning-main">${escapeHTML(senses[0].meaning||w.meaning||'无释义')}</div><div class="meaning-list">${senses.map((s,i)=>`<span class="meaning-chip">${ord[i]||'•'} ${escapeHTML(s.meaning||'')}</span>`).join('')}</div>${senses[0].example?`<div class="example-box"><div class="th" lang="th">${escapeHTML(senses[0].example)}</div><div class="translation">${escapeHTML(senses[0].translation||'')}</div></div>`:''}</div></div>`;
+      $('studyCard').innerHTML=`<div class="card-back"><div class="card-badges"><span class="badge level">L${w.level}</span><span class="badge">No.${String(w.id).padStart(4,'0')}</span></div><div class="hero-word"><div class="card-side">ANSWER</div><div class="th-large" lang="th" style="font-size:34px">${escapeHTML(w.thai)}</div><div class="hero-ipa">/${escapeHTML(w.ipa)}/</div></div><div class="meaning-box"><div class="meaning-main">${escapeHTML(senses[0].meaning||w.meaning||'无释义')}</div><div class="meaning-list">${senses.map((s,i)=>`<span class="meaning-chip">${ord[i]||'•'} ${escapeHTML(s.meaning||'')}</span>`).join('')}</div>${senses[0].example?`<div class="example-box"><div class="th" lang="th">${escapeHTML(senses[0].example)}</div><div class="translation">${escapeHTML(senses[0].translation||'')}</div></div>`:''}</div></div>`;
     }
   }
   function setReviewState(w,st){
